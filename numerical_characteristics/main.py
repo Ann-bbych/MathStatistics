@@ -1,7 +1,11 @@
 # =========================
 # file: main.py
 # =========================
+
 from __future__ import annotations
+
+import os
+from datetime import datetime
 from typing import List, Tuple
 import matplotlib.pyplot as plt
 
@@ -29,51 +33,64 @@ from calculations import (
     excess,
 )
 
+# Базова папка проекту (там де лежить main.py)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Папка output
+OUTPUT_ROOT = os.path.join(BASE_DIR, "output")
+os.makedirs(OUTPUT_ROOT, exist_ok=True)
 
 # ---------- Графіки ----------
-def plot_frequency_polygon(values: List[int], freq: List[int], title: str) -> None:
+def plot_frequency_polygon(values, freq, title, save_path):
     plt.figure()
     plt.plot(values, freq, marker="o")
     plt.title(title)
     plt.xlabel("x")
     plt.ylabel("n_i")
     plt.grid(True)
+    plt.savefig(save_path)
+    plt.close()
 
 
-def plot_relative_frequency_polygon(values: List[int], rel_freq: List[float], title: str) -> None:
+def plot_relative_frequency_polygon(values, rel_freq, title, save_path):
     plt.figure()
     plt.plot(values, rel_freq, marker="o")
     plt.title(title)
     plt.xlabel("x")
     plt.ylabel("w_i")
     plt.grid(True)
+    plt.savefig(save_path)
+    plt.close()
 
 
-def plot_empirical_cdf(xs: List[float], Fs: List[float], title: str) -> None:
+def plot_empirical_cdf(xs, Fs, title, save_path):
     plt.figure()
-    # для дискретної зручно робити ступінчастий графік:
     plt.step(xs, Fs, where="post")
     plt.title(title)
     plt.xlabel("x")
     plt.ylabel("F_n(x)")
     plt.ylim(0.0, 1.05)
     plt.grid(True)
+    plt.savefig(save_path)
+    plt.close()
 
 
-def plot_histogram_counts(intervals: List[Tuple[float, float]], ni: List[int], title: str) -> None:
+def plot_histogram_counts(intervals, ni, title, save_path):
     plt.figure()
     lefts = []
     widths = []
+
     for (a0, a1) in intervals:
         lefts.append(a0)
         widths.append(a1 - a0)
 
-    # стовпчики за інтервалами: висота = ni
     plt.bar(lefts, ni, width=widths, align="edge")
     plt.title(title)
-    plt.xlabel("Інтервали (ліва межа)")
+    plt.xlabel("Інтервали")
     plt.ylabel("n_i")
     plt.grid(True)
+    plt.savefig(save_path)
+    plt.close()
 
 
 # ---------- Вивід таблиць ----------
@@ -239,17 +256,20 @@ def print_analysis(out: DualOutput, disc: dict, grp: dict) -> None:
 
 
 def main() -> None:
+    # Створюємо унікальну папку для кожного запуску
+    run_name = datetime.now().strftime("run_%Y%m%d_%H%M%S")
+    RUN_DIR = os.path.join(OUTPUT_ROOT, run_name)
+    os.makedirs(RUN_DIR, exist_ok=True)
+    
     # 1) Ввід
     print("Рекомендація: для кращої наочності бажано, щоб b - a <= 10 (це не є обмеженням).")
     n = int(input("Введіть n (>=100): ").strip())
     a = int(input("Введіть a (ліва межа, ціле): ").strip())
     b = int(input("Введіть b (права межа, ціле): ").strip())
 
-    file_path = input("Введіть назву файлу для результатів (наприклад result.txt), або Enter щоб пропустити: ").strip()
-    if file_path == "":
-        file_path = "result.txt"  # можна залишити за замовчуванням, або зробити None
-
-    out = DualOutput(file_path)
+    # result.txt автоматично в папці run
+    result_path = os.path.join(RUN_DIR, "result.txt")
+    out = DualOutput(result_path)
 
     # 2) Генерація
     sample = generate_sample(n, a, b)
@@ -275,10 +295,25 @@ def main() -> None:
     disc_stats = print_characteristics_discrete(out, sorted_sample, values, freq, sample)
 
     # Графіки (дискретні)
-    plot_frequency_polygon(values, freq, "Полігон частот (дискретний)")
-    plot_relative_frequency_polygon(values, rel_freq, "Полігон відносних частот (дискретний)")
+    plot_frequency_polygon(
+    values,
+    freq,
+    "Полігон частот (дискретний)",
+    os.path.join(RUN_DIR, "frequency_polygon.png")
+    )
+    plot_relative_frequency_polygon(
+    values,
+    rel_freq,
+    "Полігон відносних частот (дискретний)",
+    os.path.join(RUN_DIR, "relative_frequency_polygon.png")
+    )
     xs_d, Fs_d = empirical_cdf_discrete(values, freq)
-    plot_empirical_cdf([float(x) for x in xs_d], Fs_d, "Емпірична ФР (дискретна)")
+    plot_empirical_cdf(
+    [float(x) for x in xs_d],
+    Fs_d,
+    "Емпірична ФР (дискретна)",
+    os.path.join(RUN_DIR, "cdf_discrete.png")
+)
 
     # 4) Інтервальна частина
     out.line("========================================")
@@ -290,11 +325,22 @@ def main() -> None:
     grp_stats = print_characteristics_grouped(out, zi, ni, wi, sample)
 
     # Гістограма (за ni — як ти вирішила)
-    plot_histogram_counts(intervals, ni, "Гістограма частот (n_i)")
+    plot_histogram_counts(
+    intervals,
+    ni,
+    "Гістограма частот",
+    os.path.join(RUN_DIR, "histogram.png")
+)
+
 
     # Емпірична ФР (інтервальна)
     xs_g, Fs_g = empirical_cdf_grouped(intervals, ni)
-    plot_empirical_cdf(xs_g, Fs_g, "Емпірична ФР (інтервальна)")
+    plot_empirical_cdf(
+    xs_g,
+    Fs_g,
+    "Емпірична ФР (інтервальна)",
+    os.path.join(RUN_DIR, "cdf_grouped.png")
+)
 
     # 5) Аналіз
     out.line("========================================")
@@ -304,8 +350,8 @@ def main() -> None:
 
     out.close()
 
-    # Показати графіки
-    plt.show()
+    
+    
 
 
 if __name__ == "__main__":
