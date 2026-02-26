@@ -133,7 +133,9 @@ def simplified_median_interval(zi: List[float], ni: List[int]) -> float:
     return zi[-1]
 
 
-def empirical_cdf_grouped(intervals: List[Tuple[float, float]], ni: List[int]) -> Tuple[List[float], List[float]]:
+def empirical_cdf_grouped(intervals: List[Tuple[float, float]], 
+                          ni: List[int]) -> Tuple[List[float], 
+                                                  List[float]]:
     n = 0
     for f in ni:
         n += f

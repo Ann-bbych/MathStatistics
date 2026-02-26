@@ -64,7 +64,6 @@ def modes(values: List[float], freq: List[int]) -> List[float]:
     for i in range(len(freq)):
         if freq[i] == max_f:
             res.append(float(values[i]))
-
     return res
 
 
