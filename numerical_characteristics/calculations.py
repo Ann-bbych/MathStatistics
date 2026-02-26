@@ -44,23 +44,28 @@ def median(sorted_sample: List[int]) -> float:
         return (float(left) + float(right)) / 2.0
 
 
-def mode(values: List[float], freq: List[int]) -> float:
+def modes(values: List[float], freq: List[int]) -> List[float]:
     """
-    Mo — значення з максимальною частотою.
-    Якщо максимумів кілька — беремо перший.
+    Повертає ВСІ моди (всі x_i з максимальною частотою).
     """
     if len(values) == 0:
         raise ValueError("Немає значень для моди.")
     if len(values) != len(freq):
         raise ValueError("values і freq різної довжини.")
 
+    # 1) максимальна частота
     max_f = freq[0]
-    idx = 0
-    for i in range(1, len(freq)):
-        if freq[i] > max_f:
-            max_f = freq[i]
-            idx = i
-    return float(values[idx])
+    for f in freq:
+        if f > max_f:
+            max_f = f
+
+    # 2) усі значення з цією частотою
+    res: List[float] = []
+    for i in range(len(freq)):
+        if freq[i] == max_f:
+            res.append(float(values[i]))
+
+    return res
 
 
 # -------------- Розсіювання ----------------------------------------

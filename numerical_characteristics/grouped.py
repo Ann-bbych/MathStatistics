@@ -22,7 +22,7 @@ def build_intervals(sample: List[int]) -> Tuple[List[Tuple[float, float]], List[
     Створює інтервальний ряд для цілих даних.
 
     Повертає:
-      intervals: [(a0,a1), (a1,a2), ...]  (піввідкриті [a_{i-1}; a_i), останній зробимо закритим логічно)
+      intervals: [(a0,a1), (a1,a2), ..., останній - закритий]
       zi:        середини інтервалів (a_{i-1}+a_i)/2
       ni:        абсолютні частоти
       wi:        відносні частоти
@@ -42,7 +42,6 @@ def build_intervals(sample: List[int]) -> Tuple[List[Tuple[float, float]], List[
         if x > mx:
             mx = x
 
-    # Щоб інтервали точно "накрили" максимум, працюємо з float межами.
     # Ширина:
     if k <= 0:
         raise ValueError("k <= 0.")
@@ -67,7 +66,7 @@ def build_intervals(sample: List[int]) -> Tuple[List[Tuple[float, float]], List[
         zi.append((a0 + a1) / 2.0)
 
     # Підрахунок ni:
-    # правило: [a_{i-1}, a_i) для всіх, а останній інтервал включає праву межу.
+    # [a_{i-1}, a_i) для всіх, а останній інтервал включає праву межу.
     for x in sample:
         placed = False
         xf = float(x)
@@ -84,7 +83,6 @@ def build_intervals(sample: List[int]) -> Tuple[List[Tuple[float, float]], List[
                     placed = True
                     break
         if not placed:
-            # через похибку float теоретично може "випасти" — підстрахуємось
             ni[k - 1] += 1
 
     wi: List[float] = []
@@ -94,17 +92,29 @@ def build_intervals(sample: List[int]) -> Tuple[List[Tuple[float, float]], List[
     return intervals, zi, ni, wi
 
 
-def simplified_mode_interval(zi: List[float], ni: List[int]) -> float:
-    """Спрощена Mo для інтервального: середина інтервалу з найбільшою частотою."""
+def simplified_mode_interval(zi: List[float], ni: List[int]) -> List[float]:
+    """
+    Спрощена Mo для інтервального: повертає ВСІ моди як середини інтервалів z_i,
+    для яких n_i максимальна.
+    """
     if len(zi) == 0:
         raise ValueError("Немає інтервалів.")
+    if len(zi) != len(ni):
+        raise ValueError("zi і ni різної довжини.")
+
+    # 1) max частота
     max_f = ni[0]
-    idx = 0
-    for i in range(1, len(ni)):
-        if ni[i] > max_f:
-            max_f = ni[i]
-            idx = i
-    return zi[idx]
+    for f in ni:
+        if f > max_f:
+            max_f = f
+
+    # 2) усі z_i з max частотою
+    res: List[float] = []
+    for i in range(len(ni)):
+        if ni[i] == max_f:
+            res.append(zi[i])
+
+    return res
 
 
 def simplified_median_interval(zi: List[float], ni: List[int]) -> float:

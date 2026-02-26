@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import List
 import random
 
-
 def generate_sample(n: int, a: int, b: int) -> List[int]:
     """
     Генерує вибірку з цілих чисел у діапазоні [a; b].

@@ -4,7 +4,7 @@ from typing import Optional, TextIO
 
 class DualOutput:
     """
-    Вивід одночасно в консоль і (за бажанням) у файл.
+    Вивід одночасно в консоль і у файл
     Використання:
         out = DualOutput("result.txt")
         out.line("Hello")
@@ -28,5 +28,4 @@ class DualOutput:
 
 
 def format_num(x: float, digits: int = 2) -> str:
-    """Округлення ТІЛЬКИ для виводу."""
-    return f"{x:.{digits}f}"
+    return f"{x:.{digits}f}" # округлення тільки для виводу, не для обчислень

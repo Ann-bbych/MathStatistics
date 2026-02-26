@@ -41,22 +41,52 @@ def build_variation_series(sample: List[int]) -> Tuple[List[int], List[int], Lis
     return sorted_sample, values, rel_freq, freq
 
 
-def empirical_cdf_discrete(values: List[int], freq: List[int]) -> Tuple[List[float], List[float]]:
-    # n = сума частот
+def empirical_cdf_discrete(values: List[int], freq: List[int]) -> Tuple[float, float, List[Tuple[float, float, float]]]:
+    """
+    Емпірична ФР для дискретного розподілу:
+    повертає:
+      x_left, x_right — межі для "хвостів" 0 і 1
+      segments — список горизонтальних відрізків (x0, x1, y)
+    де:
+      - на [x_left, x1] рівень 0
+      - на [x_i, x_{i+1}] рівень F_i
+      - на [x_k, x_right] рівень 1
+    """
     n = 0
     for f in freq:
         n += f
     if n == 0:
         raise ValueError("n = 0")
 
-    # cum [ω_i = n_i / n] - перелік значень F(x) (кумулятивні сума відносних частот)
-    cum = []
+    # кумулятивні відносні частоти F_i
+    cum: List[float] = []
     s = 0.0
     for f in freq:
         s += f / n
         cum.append(s)
 
-    # Побудова точок функції: x<=x1 => 0, x1<x<=x2 => ω1, ...
-    xs: List[float] = [float(values[0])] + [float(v) for v in values]
-    Fs: List[float] = [0.0] + cum
-    return xs, Fs
+    x_first = float(values[0])
+    x_last = float(values[-1])
+
+    # невеликі "поля" зліва/справа, щоб було видно 0 і 1
+    left_pad = 1.0
+    right_pad = 1.0
+    x_left = x_first - left_pad
+    x_right = x_last + right_pad
+
+    segments: List[Tuple[float, float, float]] = []
+
+    # 0 до першого значення
+    segments.append((x_left, x_first, 0.0))
+
+    # основні сходинки
+    for i in range(len(values)):
+        x0 = float(values[i])
+        y = cum[i]
+        if i < len(values) - 1:
+            x1 = float(values[i + 1])
+        else:
+            x1 = x_right  # після останнього
+        segments.append((x0, x1, y))
+
+    return x_left, x_right, segments
