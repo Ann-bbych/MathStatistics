@@ -11,7 +11,6 @@ def generate_sample(n: int, a: int, b: int) -> List[int]:
     if a > b:
         raise ValueError("Ліва межа a не може бути більшою за b.")
 
-    # Цілі числа, включно з межами.
     sample: List[int] = []
     for _ in range(n):
         sample.append(random.randint(a, b))

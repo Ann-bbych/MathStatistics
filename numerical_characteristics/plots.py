@@ -27,26 +27,51 @@ def plot_relative_frequency_polygon(values, rel_freq, title, save_path, show_plo
         plt.close()
 
 
-def plot_empirical_cdf_discrete_textbook(x_left, x_right, segments, title, save_path, show_plots: bool):
+def plot_empirical_cdf_discrete(x_left, x_right, segments, title, save_path, show_plots: bool):
     plt.figure()
     plt.title(title)
     plt.xlabel(r"$x_i$")
     plt.ylabel(r"$\tilde{F}(x)$")
     plt.ylim(0.0, 1.05)
     plt.grid(True)
-
-    for (x0, x1, y) in segments:
+    
+    # чорна точка старту (0-й рівень)
+    x_first_real = segments[0][1]   # перше значення вибірки
+    plt.plot([x_first_real], [0.0],
+            marker="o",
+            markersize=6,
+            markerfacecolor="black",
+            markeredgecolor="black")
+    
+    for i, (x0, x1, y) in enumerate(segments):
         plt.hlines(y, x0, x1, linewidth=2)
 
-        # лівий кінець — "відкритий"
+        if i == 0:
+            continue
+
+        if i == len(segments) - 1:
+            plt.plot([x0], [y], marker="o", markersize=6,
+                    markerfacecolor="white", markeredgecolor="black")
+            continue
+
+        # лівий — відкритий
         plt.plot([x0], [y], marker="o", markersize=6,
-                 markerfacecolor="white", markeredgecolor="black")
+                markerfacecolor="white", markeredgecolor="black")
 
-        # правий кінець — "закритий"
+        # правий — закритий
         plt.plot([x1], [y], marker="o", markersize=6,
-                 markerfacecolor="black", markeredgecolor="black")
+                markerfacecolor="black", markeredgecolor="black")
 
-    plt.xlim(x_left, x_right)
+        plt.xlim(x_left, x_right)
+
+    # підписи Ox тільки для x_i з вибірки
+    ticks = []
+    for (x0, x1, y) in segments:
+        if x0 != x_left:
+            ticks.append(float(x0))
+    ticks = sorted(set(ticks))
+    plt.xticks(ticks)
+
     plt.savefig(save_path)
     if not show_plots:
         plt.close()

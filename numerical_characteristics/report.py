@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict
 from output import DualOutput, format_num
 from calculations import (
     arithmetic_mean,
@@ -122,17 +122,9 @@ def print_characteristics_grouped(out: DualOutput,
     xbar = arithmetic_mean(zi, ni)
     rho = sample_range(sample)
 
-    # ВАЖЛИВО: зараз simplified_mode_interval у твоєму grouped.py повертає 1 значення.
-    # Якщо ти вже переробила її на список — буде ок.
-    Mo_val_or_list = simplified_mode_interval(zi, ni)
+    Mo_list = simplified_mode_interval(zi, ni)
     Me = simplified_median_interval(zi, ni)
-
-    # Нормалізуємо Mo до списку, щоб друк працював у будь-якому випадку:
-    if isinstance(Mo_val_or_list, list):
-        Mo_list = Mo_val_or_list
-    else:
-        Mo_list = [float(Mo_val_or_list)]
-
+    
     D = dispersion_D(zi, ni, xbar)
     S2 = variance_S2(zi, ni, xbar, n)
     S = standard_S(S2)

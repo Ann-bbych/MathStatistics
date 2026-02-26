@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import List, Tuple
-import math
 
 
 def _find_r_for_n(n: int) -> int:
@@ -141,7 +140,6 @@ def empirical_cdf_grouped(intervals: List[Tuple[float, float]], ni: List[int]) -
     if n == 0:
         raise ValueError("n=0.")
 
-    # стартова точка: ліва межа першого інтервалу, F=0
     x0 = intervals[0][0]
     xs: List[float] = [x0]
     Fs: List[float] = [0.0]

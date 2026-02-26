@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
-from typing import List, Tuple
 import matplotlib.pyplot as plt
-
 from output import DualOutput
 from generation import generate_sample
 from discrete import build_variation_series, empirical_cdf_discrete
@@ -18,7 +16,7 @@ from report import (
 from plots import (
     plot_frequency_polygon,
     plot_relative_frequency_polygon,
-    plot_empirical_cdf_discrete_textbook,
+    plot_empirical_cdf_discrete,
     plot_histogram_density,
     plot_empirical_cdf_grouped,
 )
@@ -94,7 +92,7 @@ def main() -> None:
     )
     x_left, x_right, segments = empirical_cdf_discrete(values, freq)
 
-    plot_empirical_cdf_discrete_textbook(
+    plot_empirical_cdf_discrete(
         x_left,
         x_right,
         segments,
