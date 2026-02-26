@@ -1,6 +1,3 @@
-# =========================
-# file: grouped.py
-# =========================
 from __future__ import annotations
 from typing import List, Tuple
 import math
@@ -128,23 +125,22 @@ def simplified_median_interval(zi: List[float], ni: List[int]) -> float:
 
 
 def empirical_cdf_grouped(intervals: List[Tuple[float, float]], ni: List[int]) -> Tuple[List[float], List[float]]:
-    """
-    Емпірична ФР для інтервального ряду (спрощено):
-    повертаємо точки по правих межах інтервалів: (a_i, F(a_i))
-    де F(a_i) = (Σ_{j<=i} n_j) / n
-    """
     n = 0
     for f in ni:
         n += f
     if n == 0:
         raise ValueError("n=0.")
 
-    xs: List[float] = []
-    Fs: List[float] = []
+    # стартова точка: ліва межа першого інтервалу, F=0
+    x0 = intervals[0][0]
+    xs: List[float] = [x0]
+    Fs: List[float] = [0.0]
+
     cum = 0
     for i in range(len(intervals)):
         cum += ni[i]
         right = intervals[i][1]
         xs.append(right)
         Fs.append(cum / n)
+
     return xs, Fs

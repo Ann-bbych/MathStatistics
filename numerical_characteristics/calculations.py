@@ -1,12 +1,9 @@
-# =========================
-# file: calculations.py
-# =========================
 from __future__ import annotations
 from typing import List, Tuple
 import math
 
 
-# ---------- Допоміжні ----------
+# допоміжна функція для підрахунку суми частот
 def _total_n(freq: List[int]) -> int:
     s = 0
     for f in freq:
@@ -14,14 +11,14 @@ def _total_n(freq: List[int]) -> int:
     return s
 
 
-# ---------- Локаційні ----------
+# -------------- Локаційні ----------------------------------------
 def arithmetic_mean(values: List[float], freq: List[int]) -> float:
     """
     x̄ = (1/n) * Σ n_i * x_i
     """
     n = _total_n(freq)
     if n == 0:
-        raise ValueError("Порожні частоти (n=0).")
+        raise ValueError("НЕМА частот (n=0).")
 
     s = 0.0
     for i in range(len(values)):
@@ -29,28 +26,11 @@ def arithmetic_mean(values: List[float], freq: List[int]) -> float:
     return s / float(n)
 
 
-def sample_range(sample: List[int]) -> int:
-    """
-    ρ = max(x) - min(x) по реальній вибірці.
-    """
-    if len(sample) == 0:
-        raise ValueError("Порожня вибірка.")
-    mn = sample[0]
-    mx = sample[0]
-    for x in sample:
-        if x < mn:
-            mn = x
-        if x > mx:
-            mx = x
-    return mx - mn
-
-
 def median(sorted_sample: List[int]) -> float:
     """
     Me для впорядкованої вибірки:
       n=2m+1 => x_{m+1}
       n=2m   => (x_m + x_{m+1})/2
-    (індексація в коді 0-based)
     """
     n = len(sorted_sample)
     if n == 0:
@@ -83,7 +63,23 @@ def mode(values: List[float], freq: List[int]) -> float:
     return float(values[idx])
 
 
-# ---------- Розсіювання ----------
+# -------------- Розсіювання ----------------------------------------
+def sample_range(sample: List[int]) -> int:
+    """
+    ρ = max(x) - min(x) 
+    """
+    if len(sample) == 0:
+        raise ValueError("Порожня вибірка.")
+    mn = sample[0]
+    mx = sample[0]
+    for x in sample:
+        if x < mn:
+            mn = x
+        if x > mx:
+            mx = x
+    return mx - mn
+
+
 def dispersion_D(values: List[float], freq: List[int], mean: float) -> float:
     """
     D = (1/n) * Σ n_i (x_i - x̄)^2
@@ -101,8 +97,8 @@ def dispersion_D(values: List[float], freq: List[int], mean: float) -> float:
 
 def variance_S2(values: List[float], freq: List[int], mean: float, n: int) -> float:
     """
-    S^2 = (1/(n-1)) * Σ n_i (x_i - x̄)^2   (виправлена)
-    Важливо: тут n передаємо явно (обсяг вибірки).
+    S^2 = (1/(n-1)) * Σ n_i (x_i - x̄)^2   (виправлена вибіркова дисперсія)
+    
     """
     if n <= 1:
         raise ValueError("Для S^2 потрібно n>1.")
@@ -115,9 +111,8 @@ def variance_S2(values: List[float], freq: List[int], mean: float, n: int) -> fl
 
 
 def standard_S(s2: float) -> float:
-    """S = sqrt(S^2) (беремо додатній корінь)"""
-    if s2 < 0:
-        # теоретично не має бути, але через похибки може бути -1e-16
+    """S = sqrt(S^2) (беремо додатній корінь) стандарт"""
+    if s2 < 0: 
         if s2 > -1e-12:
             s2 = 0.0
         else:
@@ -126,13 +121,13 @@ def standard_S(s2: float) -> float:
 
 
 def variation(s: float, mean: float) -> float:
-    """v = s / x̄ (без модуля і без %)"""
+    """v = s / x̄ """
     if mean == 0:
-        raise ValueError("x̄ = 0, v = s/x̄ не визначено.")
+        raise ValueError("якщо x̄ = 0, v = s/x̄ не визначена.")
     return s / mean
 
 
-# ---------- Моменти ----------
+# -------------- Моменти ------------------------------------------------
 def initial_moment(values: List[float], freq: List[int], k: int) -> float:
     """
     m_k = (1/n) * Σ n_i * x_i^k
@@ -166,10 +161,10 @@ def central_moment(values: List[float], freq: List[int], mean: float, k: int) ->
     return s / float(n)
 
 
-# ---------- Форма ----------
+# -------------- Форма -----------------------------------
 def asymmetry(mu2: float, mu3: float) -> float:
     """
-    A = γ1 = μ3 / μ2^(3/2)
+    A = μ3 / μ2^(3/2)
     """
     if mu2 == 0:
         raise ValueError("μ2 = 0, асиметрія не визначена.")
@@ -179,7 +174,7 @@ def asymmetry(mu2: float, mu3: float) -> float:
 
 def excess(mu2: float, mu4: float) -> float:
     """
-    E = γ2 = μ4 / μ2^2 - 3
+    E = μ4 / μ2^2 - 3
     """
     if mu2 == 0:
         raise ValueError("μ2 = 0, ексцес не визначений.")

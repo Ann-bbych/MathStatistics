@@ -1,7 +1,3 @@
-# =========================
-# file: main.py
-# =========================
-
 from __future__ import annotations
 
 import os
@@ -32,6 +28,7 @@ from calculations import (
     asymmetry,
     excess,
 )
+SHOW_PLOTS = True  
 
 # Базова папка проекту (там де лежить main.py)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -40,78 +37,121 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_ROOT = os.path.join(BASE_DIR, "output")
 os.makedirs(OUTPUT_ROOT, exist_ok=True)
 
-# ---------- Графіки ----------
+
+# ---------- Графіки ---------------------------------------------------
 def plot_frequency_polygon(values, freq, title, save_path):
     plt.figure()
     plt.plot(values, freq, marker="o")
     plt.title(title)
-    plt.xlabel("x")
-    plt.ylabel("n_i")
+    plt.xlabel(r"$x_i$")
+    plt.ylabel(r"$n_i$")
     plt.grid(True)
     plt.savefig(save_path)
-    plt.close()
+    if not SHOW_PLOTS:
+        plt.close()
 
 
 def plot_relative_frequency_polygon(values, rel_freq, title, save_path):
     plt.figure()
     plt.plot(values, rel_freq, marker="o")
     plt.title(title)
-    plt.xlabel("x")
-    plt.ylabel("w_i")
+    plt.xlabel(r"$x_i$")
+    plt.ylabel(r"$w_i$")
     plt.grid(True)
     plt.savefig(save_path)
-    plt.close()
+    if not SHOW_PLOTS:
+        plt.close()
 
 
 def plot_empirical_cdf(xs, Fs, title, save_path):
     plt.figure()
     plt.step(xs, Fs, where="post")
     plt.title(title)
-    plt.xlabel("x")
-    plt.ylabel("F_n(x)")
+    plt.xlabel(r"$x_i$")
+    plt.ylabel(r"$\tilde{F}(x)$")
     plt.ylim(0.0, 1.05)
     plt.grid(True)
     plt.savefig(save_path)
-    plt.close()
+    if not SHOW_PLOTS:
+        plt.close()
 
 
-def plot_histogram_counts(intervals, ni, title, save_path):
+def plot_histogram_density(intervals, wi, title, save_path):
     plt.figure()
+
     lefts = []
     widths = []
+    heights = []
 
-    for (a0, a1) in intervals:
-        lefts.append(a0)
-        widths.append(a1 - a0)
-
-    plt.bar(lefts, ni, width=widths, align="edge")
-    plt.title(title)
-    plt.xlabel("Інтервали")
-    plt.ylabel("n_i")
-    plt.grid(True)
-    plt.savefig(save_path)
-    plt.close()
-
-
-# ---------- Вивід таблиць ----------
-def print_discrete_table(out: DualOutput, values: List[int], freq: List[int], rel_freq: List[float]) -> None:
-    out.line("Частотна таблиця (дискретна):")
-    out.line("x_i\t\tn_i\t\tw_i")
-    for i in range(len(values)):
-        out.line(f"{values[i]}\t\t{freq[i]}\t\t{format_num(rel_freq[i])}")
-    out.line()
-
-
-def print_grouped_table(out: DualOutput, intervals: List[Tuple[float, float]], zi: List[float], ni: List[int], wi: List[float]) -> None:
-    out.line("Інтервальна таблиця (згруповані дані):")
-    out.line("[a_{i-1}; a_i)\t\tz_i\t\tn_i\t\tw_i")
     for i in range(len(intervals)):
         a0, a1 = intervals[i]
-        out.line(f"[{format_num(a0)}; {format_num(a1)})\t\t{format_num(zi[i])}\t\t{ni[i]}\t\t{format_num(wi[i])}")
+        width = a1 - a0
+
+        lefts.append(a0)
+        widths.append(width)
+        heights.append(wi[i] / width)   # hi
+
+    plt.bar(lefts, heights, width=widths, align="edge")
+
+    plt.title(title)
+    plt.xlabel(r"$a_i$")
+    plt.ylabel(r"$h_i=\dfrac{w_i}{a_i-a_{i-1}}$")
+    plt.grid(True)
+
+    plt.savefig(save_path)
+
+    if not SHOW_PLOTS:
+        plt.close()
+
+
+def plot_empirical_cdf_grouped(xs, Fs, title, save_path):
+    plt.figure()
+    plt.plot(xs, Fs, marker="o")   # лінійна огіва
+    plt.title(title)
+    plt.xlabel(r"$x_i$")
+    plt.ylabel(r"$\tilde{F}(x)$")
+    plt.ylim(0.0, 1.05)
+    plt.grid(True)
+    plt.savefig(save_path)
+    if not SHOW_PLOTS:
+        plt.close()
+
+
+# ------------------ Таблиці --------------------------------------------------------------------------------
+def print_discrete_table(out: DualOutput, values: List[int], freq: List[int], rel_freq: List[float]) -> None:
+    out.line("Частотна таблиця:")
+    out.line("варіанти\t\tабсолютні частоти\tвідносні частоти")
+    out.line("x_i\t\t\tn_i\t\t\tw_i")
+
+    for i in range(len(values)):
+        out.line(f"{values[i]}\t\t\t{freq[i]}\t\t\t{format_num(rel_freq[i])}")
+        
     out.line()
 
 
-# ---------- Розрахунок і друк характеристик ----------
+def print_grouped_table(out: DualOutput,
+                        intervals: List[Tuple[float, float]],
+                        zi: List[float],
+                        ni: List[int],
+                        wi: List[float]) -> None:
+    out.line("Таблиця інтервального розподілу:")
+    out.line(f"{'інтервали':<18} {'середини інтервалів':<20} {'абсолютні частоти':<20} {'відносні частоти':<18}")
+    out.line(f"{'[a_{i-1}; a_i)':<18} {'z_i':<20} {'n_i':<20} {'w_i':<18}")
+
+    last = len(intervals) - 1
+    for i in range(len(intervals)):
+        a0, a1 = intervals[i]
+        if i == last:
+            inter = f"[{format_num(a0)}; {format_num(a1)}]"
+        else:
+            inter = f"[{format_num(a0)}; {format_num(a1)})"
+
+        out.line(f"{inter:<18} {format_num(zi[i]):<20} {ni[i]:<20} {format_num(wi[i]):<18}")
+
+    out.line()
+
+
+# ---------- Розрахунок і друк числових характеристик ---------------------------------------------------------------------------------------
 def print_characteristics_discrete(out: DualOutput, sample_sorted: List[int], values: List[int], freq: List[int], sample: List[int]) -> None:
     # Для calculations використовуємо values як float
     values_f = [float(x) for x in values]
@@ -127,7 +167,7 @@ def print_characteristics_discrete(out: DualOutput, sample_sorted: List[int], va
     S = standard_S(S2)
     v = variation(S, xbar)
 
-    # моменти m1..m4, μ1..μ4 (через суму)
+    # моменти через суму
     m = {}
     mu = {}
     for k in range(1, 5):
@@ -163,7 +203,7 @@ def print_characteristics_discrete(out: DualOutput, sample_sorted: List[int], va
     out.line(f"  E = {format_num(E)}")
     out.line()
 
-    # повернемо для аналізу (не обов'язково, але зручно)
+    # поверне для аналізу
     return {
         "xbar": xbar, "rho": rho, "Mo": Mo, "Me": Me,
         "D": D, "S2": S2, "S": S, "v": v,
@@ -172,13 +212,13 @@ def print_characteristics_discrete(out: DualOutput, sample_sorted: List[int], va
 
 
 def print_characteristics_grouped(out: DualOutput, zi: List[float], ni: List[int], wi: List[float], sample: List[int]) -> None:
-    # "Спрощено": трактуємо (z_i, n_i) як дискретний ряд
+    # трактуємо (z_i, n_i) як дискретний ряд
     n = 0
     for f in ni:
         n += f
 
     xbar = arithmetic_mean(zi, ni)
-    rho = sample_range(sample)  # за домовленістю по реальній вибірці
+    rho = sample_range(sample)  
 
     Mo = simplified_mode_interval(zi, ni)
     Me = simplified_median_interval(zi, ni)
@@ -197,13 +237,13 @@ def print_characteristics_grouped(out: DualOutput, zi: List[float], ni: List[int
     A = asymmetry(mu[2], mu[3])
     E = excess(mu[2], mu[4])
 
-    out.line("Статистики локації (згруповані дані, спрощено):")
-    out.line(f"  Mo_int = {format_num(Mo)}")
-    out.line(f"  Me_int = {format_num(Me)}")
-    out.line(f"  x̄_int  = {format_num(xbar)}")
+    out.line("Статистики локації:")
+    out.line(f"  Mo = {format_num(Mo)}")
+    out.line(f"  Me = {format_num(Me)}")
+    out.line(f"  x̄  = {format_num(xbar)}")
     out.line()
 
-    out.line("Статистики розсіювання (згруповані дані):")
+    out.line("Статистики розсіювання:")
     out.line(f"  ρ  = {rho}")
     out.line(f"  D  = {format_num(D)}")
     out.line(f"  S² = {format_num(S2)}")
@@ -211,14 +251,14 @@ def print_characteristics_grouped(out: DualOutput, zi: List[float], ni: List[int
     out.line(f"  v  = {format_num(v)}")
     out.line()
 
-    out.line("Моменти статистичної зміни (згруповані дані):")
+    out.line("Моменти статистичної зміни:")
     for k in range(1, 5):
         out.line(f"  m{k}  = {format_num(m[k])}")
     for k in range(1, 5):
         out.line(f"  μ{k}  = {format_num(mu[k])}")
     out.line()
 
-    out.line("Статистики форми (згруповані дані):")
+    out.line("Статистики форми:")
     out.line(f"  A = {format_num(A)}")
     out.line(f"  E = {format_num(E)}")
     out.line()
@@ -229,13 +269,12 @@ def print_characteristics_grouped(out: DualOutput, zi: List[float], ni: List[int
         "m": m, "mu": mu, "A": A, "E": E
     }
 
-
+# -------- Аналіз результатів -------------------------------------------------------------------------------------------------------
 def print_analysis(out: DualOutput, disc: dict, grp: dict) -> None:
     """
-    Аналіз результатів (скелет).
-    Ти зможеш доповнити, або я розширю з урахуванням конкретних чисел.
+    Аналіз результатів: порівняння дискретного та інтервального розподілу, інтерпретація статистик.
     """
-    out.line("АНАЛІЗ РЕЗУЛЬТАТІВ (скелет):")
+    out.line("АНАЛІЗ РЕЗУЛЬТАТІВ:")
     out.line("1) Порівняння локації:")
     out.line(f"   Дискретно: x̄={format_num(disc['xbar'])}, Me={format_num(disc['Me'])}, Mo={format_num(disc['Mo'])}")
     out.line(f"   Інтервально: x̄≈{format_num(grp['xbar'])}, Me≈{format_num(grp['Me'])}, Mo≈{format_num(grp['Mo'])}")
@@ -261,32 +300,37 @@ def main() -> None:
     RUN_DIR = os.path.join(OUTPUT_ROOT, run_name)
     os.makedirs(RUN_DIR, exist_ok=True)
     
-    # 1) Ввід
-    print("Рекомендація: для кращої наочності бажано, щоб b - a <= 10 (це не є обмеженням).")
-    n = int(input("Введіть n (>=100): ").strip())
-    a = int(input("Введіть a (ліва межа, ціле): ").strip())
-    b = int(input("Введіть b (права межа, ціле): ").strip())
+    # Ввід
+    print("РЕКОМЕНДАЦІЯ:\nдля кращої наочності має виконуватись\nb - a <= 10\n")
 
+    while True:
+        try:
+            n = int(input("Введіть n (>=100): ").strip())
+            a = int(input("Введіть a (ліва межа, ціле): ").strip())
+            b = int(input("Введіть b (права межа, ціле): ").strip())
+            # Генерація
+            sample = generate_sample(n, a, b)  # кидає ValueError
+            break 
+
+        except ValueError as e:
+            print(f"Помилка вводу: {e}")
+            print("Спробуйте ще раз.\n")
+    
     # result.txt автоматично в папці run
     result_path = os.path.join(RUN_DIR, "result.txt")
     out = DualOutput(result_path)
-
-    # 2) Генерація
-    sample = generate_sample(n, a, b)
-    out.line("Input (згенеровані дані):")
-    out.line(f"n={n}, a={a}, b={b}")
-    out.line("Перші 30 елементів вибірки (для контролю):")
+    
+    out.line("\nЗГЕНЕРОВАНА ВИБІРКА:")
+    out.line("(перші 30 елементів для контролю)")
     preview = sample[:30]
     out.line(" ".join(str(x) for x in preview))
     out.line()
 
-    # 3) Дискретна частина
-    out.line("========================================")
-    out.line("ЧАСТИНА 1. ДИСКРЕТНИЙ РОЗПОДІЛ")
-    out.line("========================================")
+    # Дискретна частина ----------------------------------------------------------------
+    out.line("ЗАВДАННЯ 1. ДИСКРЕТНИЙ РОЗПОДІЛ\n")
     sorted_sample, values, rel_freq, freq = build_variation_series(sample)
 
-    out.line("Варіаційний ряд (перші 50 значень):")
+    out.line("Варіаційний ряд (перші 50 елементів):")
     out.line(" ".join(str(x) for x in sorted_sample[:50]))
     out.line()
 
@@ -294,65 +338,62 @@ def main() -> None:
 
     disc_stats = print_characteristics_discrete(out, sorted_sample, values, freq, sample)
 
-    # Графіки (дискретні)
+    # Графіки
     plot_frequency_polygon(
-    values,
-    freq,
-    "Полігон частот (дискретний)",
-    os.path.join(RUN_DIR, "frequency_polygon.png")
+        values,
+        freq,
+        "Полігон частот",
+        os.path.join(RUN_DIR, "frequency_polygon.png")
     )
     plot_relative_frequency_polygon(
-    values,
-    rel_freq,
-    "Полігон відносних частот (дискретний)",
-    os.path.join(RUN_DIR, "relative_frequency_polygon.png")
+        values,
+        rel_freq,
+        "Полігон відносних частот",
+        os.path.join(RUN_DIR, "relative_frequency_polygon.png")
     )
     xs_d, Fs_d = empirical_cdf_discrete(values, freq)
     plot_empirical_cdf(
-    [float(x) for x in xs_d],
-    Fs_d,
-    "Емпірична ФР (дискретна)",
-    os.path.join(RUN_DIR, "cdf_discrete.png")
-)
+        [float(x) for x in xs_d],
+        Fs_d,
+        "Емпірична ФР (дискретна)",
+        os.path.join(RUN_DIR, "cdf_discrete.png")
+    )
 
-    # 4) Інтервальна частина
-    out.line("========================================")
-    out.line("ЧАСТИНА 2. ІНТЕРВАЛЬНИЙ (ЗГРУПОВАНИЙ) РОЗПОДІЛ")
-    out.line("========================================")
+
+    # Інтервальна частина -------------------------------------------------
+    out.line("ЗАВДАННЯ 2. ІНТЕРВАЛЬНИЙ РОЗПОДІЛ\n")
     intervals, zi, ni, wi = build_intervals(sample)
     print_grouped_table(out, intervals, zi, ni, wi)
 
     grp_stats = print_characteristics_grouped(out, zi, ni, wi, sample)
 
-    # Гістограма (за ni — як ти вирішила)
-    plot_histogram_counts(
+    # Гістограма (з wi)
+    plot_histogram_density(
     intervals,
-    ni,
-    "Гістограма частот",
+    wi,
+    "Гістограма",
     os.path.join(RUN_DIR, "histogram.png")
 )
 
-
     # Емпірична ФР (інтервальна)
     xs_g, Fs_g = empirical_cdf_grouped(intervals, ni)
-    plot_empirical_cdf(
-    xs_g,
-    Fs_g,
-    "Емпірична ФР (інтервальна)",
-    os.path.join(RUN_DIR, "cdf_grouped.png")
-)
 
-    # 5) Аналіз
-    out.line("========================================")
-    out.line("АНАЛІЗ")
-    out.line("========================================")
+    plot_empirical_cdf_grouped(
+        xs_g,
+        Fs_g,
+        "Емпірична ФР (інтервальна)",
+        os.path.join(RUN_DIR, "cdf_grouped.png")
+    )
+    
+    # Аналіз ------------------------------------------------------------
     print_analysis(out, disc_stats, grp_stats)
-
+    
+    # Показати графіки інтерактивно
+    if SHOW_PLOTS:
+        plt.show()
+        plt.close("all")
+        
     out.close()
-
-    
-    
-
 
 if __name__ == "__main__":
     main()
