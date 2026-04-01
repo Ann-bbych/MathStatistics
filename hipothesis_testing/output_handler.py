@@ -21,13 +21,16 @@ def format_number(value, digits=6):
         if abs(rounded - int(rounded)) < 10 ** (-digits):
             return str(int(rounded))
 
-        return f"{rounded:.{digits}f}"
+        text = f"{rounded:.{digits}f}".rstrip("0").rstrip(".")
+        return text
 
     return str(value)
 
 
 def format_alpha(alpha):
-    return f"{alpha:.2f}"
+    if isinstance(alpha, str):
+        return alpha
+    return str(alpha)
 
 
 def format_interval(left, right):
@@ -69,17 +72,6 @@ def print_distribution_table(file, bounds, frequencies, probabilities, expected)
     write_line("", file)
 
 
-def print_parameters_info(file, user_parameters_text, estimated_parameters_text):
-    if user_parameters_text != "":
-        write_line(user_parameters_text, file)
-
-    if estimated_parameters_text != "":
-        write_line(estimated_parameters_text, file)
-
-    if user_parameters_text != "" or estimated_parameters_text != "":
-        write_line("", file)
-
-
 def print_merge_info(file, was_merged):
     if was_merged:
         write_line(
@@ -102,6 +94,7 @@ def print_task_results(
     alpha,
     user_parameters_text,
     estimated_parameters_text,
+    sigma_text_after_table,
     bounds_before,
     frequencies_before,
     probabilities_before,
@@ -123,13 +116,15 @@ def print_task_results(
     write_line("=" * 80, file)
     write_line("", file)
 
-    write_line(f"Гіпотеза H₀: {hypothesis_text}", file)
-    write_line(f"Рівень значущості α = {format_alpha(alpha)}", file)
+    write_line(f"H₀: {hypothesis_text}", file)
+    write_line(f"α = {format_alpha(alpha)}", file)
     write_line("", file)
 
-    print_parameters_info(file, user_parameters_text, estimated_parameters_text)
+    if user_parameters_text != "":
+        write_line(user_parameters_text, file)
+        write_line("", file)
 
-    write_line("Таблиця розподілу до перевірки умов", file)
+    write_line("Таблиця розподілу до перевірки умов:", file)
     print_distribution_table(
         file,
         bounds_before,
@@ -138,10 +133,18 @@ def print_task_results(
         expected_before
     )
 
+    if estimated_parameters_text != "":
+        write_line(estimated_parameters_text, file)
+        write_line("", file)
+
+    if sigma_text_after_table != "":
+        write_line(sigma_text_after_table, file)
+        write_line("", file)
+
     print_merge_info(file, was_merged)
 
     if was_merged:
-        write_line("Таблиця розподілу після об'єднання класів", file)
+        write_line("Таблиця розподілу після об'єднання класів:", file)
         print_distribution_table(
             file,
             bounds_after,

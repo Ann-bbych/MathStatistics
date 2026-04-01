@@ -9,15 +9,16 @@ from chi_square import (
     get_chi_square_critical,
     check_hypothesis
 )
-from output_handler import print_task_results
+from output_handler import print_task_results, format_number
 from histograms import plot_histogram, show_all_histograms
 
 
-def read_alpha():
-    alpha_text = input("Введіть рівень значущості α (Enter -> 0.05): ").strip()
+def read_alpha(task_number):
+    print(f"Завдання {task_number}")
+    alpha_text = input("α = ").strip()
 
     if alpha_text == "":
-        return 0.05
+        return 0.05, "0.05"
 
     try:
         alpha = float(alpha_text)
@@ -27,13 +28,11 @@ def read_alpha():
     if not (0 < alpha < 1):
         raise ValueError("α повинна належати інтервалу (0; 1).")
 
-    return alpha
+    return alpha, alpha_text
 
 
 def read_normal_parameters():
-    a_text = input(
-        "Завдання 1. Введіть a (Enter -> оцінити a і σ² за вибіркою): "
-    ).strip()
+    a_text = input("a = ").strip()
 
     if a_text == "":
         return None
@@ -43,11 +42,11 @@ def read_normal_parameters():
     except ValueError:
         raise ValueError("Параметр a повинен бути числом.")
 
-    sigma_square_text = input("Завдання 1. Введіть σ²: ").strip()
+    sigma_square_text = input("σ² = ").strip()
 
     if sigma_square_text == "":
         raise ValueError(
-            "Для нормального розподілу потрібно або ввести і a, і σ², "
+            "для нормального розподілу потрібно або ввести і a, і σ², "
             "або залишити обидва поля порожніми."
         )
 
@@ -66,15 +65,17 @@ def read_normal_parameters():
         "variance": sigma_square,
         "sigma": sigma,
         "estimated_params_count": 0,
-        "user_parameters_text": f"a = {a:.6f}\nσ² = {sigma_square:.6f}",
-        "estimated_parameters_text": ""
+        "user_parameters_text": (
+            f"a = {a_text}\n"
+            f"σ² = {sigma_square_text}"
+        ),
+        "estimated_parameters_text": "",
+        "sigma_text_after_table": f"σ = √σ² = {format_number(sigma)}"
     }
 
 
 def read_exponential_parameter():
-    lambda_text = input(
-        "Завдання 2. Введіть λ (Enter -> оцінити λ за вибіркою): "
-    ).strip()
+    lambda_text = input("λ = ").strip()
 
     if lambda_text == "":
         return None
@@ -90,22 +91,23 @@ def read_exponential_parameter():
     return {
         "lambda_value": lambda_value,
         "estimated_params_count": 0,
-        "user_parameters_text": f"λ = {lambda_value:.6f}",
+        "user_parameters_text": f"λ = {lambda_text}",
         "estimated_parameters_text": ""
     }
 
 
 def main():
     try:
-        alpha = read_alpha()
+        alpha1, alpha1_text = read_alpha(1)
+        normal_input = read_normal_parameters()
+
+        alpha2, alpha2_text = read_alpha(2)
+        exponential_input = read_exponential_parameter()
 
         os.makedirs("output", exist_ok=True)
 
         bounds1, frequencies1 = read_input_file("input1.txt")
         bounds2, frequencies2 = read_input_file("input2.txt")
-
-        normal_input = read_normal_parameters()
-        exponential_input = read_exponential_parameter()
 
         with open("output/results.txt", "w", encoding="utf-8") as file:
             bounds1_for_distribution = bounds1[:]
@@ -120,10 +122,11 @@ def main():
                 estimated_params_count_1 = 2
                 user_parameters_text_1 = ""
                 estimated_parameters_text_1 = (
-                    f"a = x̄ = {mean1:.6f}\n"
-                    f"σ² = S² = {variance1:.6f}\n"
-                    f"σ = √S² = {sigma1:.6f}"
+                    f"a = x̄ = {format_number(mean1)}\n"
+                    f"σ² = S² = {format_number(variance1)}\n"
+                    f"σ = √S² = {format_number(sigma1)}"
                 )
+                sigma_text_after_table_1 = ""
             else:
                 mean1 = normal_input["mean"]
                 variance1 = normal_input["variance"]
@@ -132,6 +135,7 @@ def main():
                 estimated_params_count_1 = normal_input["estimated_params_count"]
                 user_parameters_text_1 = normal_input["user_parameters_text"]
                 estimated_parameters_text_1 = normal_input["estimated_parameters_text"]
+                sigma_text_after_table_1 = normal_input["sigma_text_after_table"]
 
             table1 = prepare_distribution_table(
                 bounds1_for_distribution,
@@ -147,7 +151,7 @@ def main():
 
             class_count_1 = len(table1["frequencies_after"])
             df1 = get_degrees_of_freedom(class_count_1, estimated_params_count_1)
-            chi_crit_1 = get_chi_square_critical(alpha, df1)
+            chi_crit_1 = get_chi_square_critical(alpha1, df1)
             conclusion1 = check_hypothesis(chi_emp_1, chi_crit_1)
 
             hypothesis_text_1 = "вибірка має нормальний закон розподілу"
@@ -156,9 +160,10 @@ def main():
                 file=file,
                 task_number=1,
                 hypothesis_text=hypothesis_text_1,
-                alpha=alpha,
+                alpha=alpha1_text,
                 user_parameters_text=user_parameters_text_1,
                 estimated_parameters_text=estimated_parameters_text_1,
+                sigma_text_after_table=sigma_text_after_table_1,
                 bounds_before=table1["bounds_before"],
                 frequencies_before=table1["frequencies_before"],
                 probabilities_before=table1["probabilities_before"],
@@ -183,10 +188,9 @@ def main():
                 estimated_params_count_2 = 1
                 user_parameters_text_2 = ""
                 estimated_parameters_text_2 = (
-                    f"λ = 1 / x̄ = 1 / {mean2:.6f} = {lambda_value:.6f}"
+                    f"λ = 1 / x̄ = 1 / {format_number(mean2)} = {format_number(lambda_value)}"
                 )
             else:
-                mean2 = None
                 lambda_value = exponential_input["lambda_value"]
 
                 estimated_params_count_2 = exponential_input["estimated_params_count"]
@@ -207,7 +211,7 @@ def main():
 
             class_count_2 = len(table2["frequencies_after"])
             df2 = get_degrees_of_freedom(class_count_2, estimated_params_count_2)
-            chi_crit_2 = get_chi_square_critical(alpha, df2)
+            chi_crit_2 = get_chi_square_critical(alpha2, df2)
             conclusion2 = check_hypothesis(chi_emp_2, chi_crit_2)
 
             hypothesis_text_2 = "вибірка має показниковий закон розподілу"
@@ -216,9 +220,10 @@ def main():
                 file=file,
                 task_number=2,
                 hypothesis_text=hypothesis_text_2,
-                alpha=alpha,
+                alpha=alpha2_text,
                 user_parameters_text=user_parameters_text_2,
                 estimated_parameters_text=estimated_parameters_text_2,
+                sigma_text_after_table="",
                 bounds_before=table2["bounds_before"],
                 frequencies_before=table2["frequencies_before"],
                 probabilities_before=table2["probabilities_before"],
