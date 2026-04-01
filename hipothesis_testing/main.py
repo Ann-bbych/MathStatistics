@@ -1,11 +1,18 @@
 from input_handler import read_input_file
 from statistics import get_mean, get_variance, get_sigma, get_lambda
 from distributions import prepare_distribution_table
-import math
+from chi_square import (
+    get_chi_square_empirical,
+    get_degrees_of_freedom,
+    get_chi_square_critical,
+    check_hypothesis
+)
 
 
 def main():
     try:
+        alpha = 0.05
+
         bounds1, frequencies1 = read_input_file("input1.txt")
         bounds2, frequencies2 = read_input_file("input2.txt")
 
@@ -24,19 +31,20 @@ def main():
             {"mean": mean1, "sigma": sigma1}
         )
 
-        print("=== Завдання 1 ===")
-        print("До об'єднання:")
-        print(table1["bounds_before"])
-        print(table1["frequencies_before"])
-        print(table1["probabilities_before"])
-        print(table1["expected_before"])
+        chi_emp_1 = get_chi_square_empirical(
+            table1["frequencies_after"],
+            table1["expected_after"]
+        )
+        df1 = get_degrees_of_freedom(len(table1["frequencies_after"]), 2)
+        print(df1)
+        chi_crit_1 = get_chi_square_critical(alpha, df1)
+        conclusion1 = check_hypothesis(chi_emp_1, chi_crit_1)
 
-        print("\nПісля об'єднання:")
-        print(table1["bounds_after"])
-        print(table1["frequencies_after"])
-        print(table1["probabilities_after"])
-        print(table1["expected_after"])
-        print("Було об'єднання:", table1["was_merged"])
+        print("=== Завдання 1 ===")
+        print("χ²емп =", chi_emp_1)
+        print("d.f. =", df1)
+        print("χ²кр =", chi_crit_1)
+        print(conclusion1)
 
         mean2 = get_mean(bounds2, frequencies2)
         lambda_value = get_lambda(mean2)
@@ -48,19 +56,19 @@ def main():
             {"lambda_value": lambda_value}
         )
 
-        print("\n=== Завдання 2 ===")
-        print("До об'єднання:")
-        print(table2["bounds_before"])
-        print(table2["frequencies_before"])
-        print(table2["probabilities_before"])
-        print(table2["expected_before"])
+        chi_emp_2 = get_chi_square_empirical(
+            table2["frequencies_after"],
+            table2["expected_after"]
+        )
+        df2 = get_degrees_of_freedom(len(table2["frequencies_after"]), 1)
+        chi_crit_2 = get_chi_square_critical(alpha, df2)
+        conclusion2 = check_hypothesis(chi_emp_2, chi_crit_2)
 
-        print("\nПісля об'єднання:")
-        print(table2["bounds_after"])
-        print(table2["frequencies_after"])
-        print(table2["probabilities_after"])
-        print(table2["expected_after"])
-        print("Було об'єднання:", table2["was_merged"])
+        print("\n=== Завдання 2 ===")
+        print("χ²емп =", chi_emp_2)
+        print("d.f. =", df2)
+        print("χ²кр =", chi_crit_2)
+        print(conclusion2)
 
     except Exception as error:
         print("Помилка:", error)
