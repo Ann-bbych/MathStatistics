@@ -10,6 +10,7 @@ from chi_square import (
     check_hypothesis
 )
 from output_handler import print_task_results
+from histograms import plot_histogram, show_all_histograms
 
 
 def main():
@@ -45,11 +46,7 @@ def main():
             estimated_params_count_1 = 2
             class_count_1 = len(table1["frequencies_after"])
 
-            df1 = get_degrees_of_freedom(
-                class_count_1,
-                estimated_params_count_1
-            )
-
+            df1 = get_degrees_of_freedom(class_count_1, estimated_params_count_1)
             chi_crit_1 = get_chi_square_critical(alpha, df1)
             conclusion1 = check_hypothesis(chi_emp_1, chi_crit_1)
 
@@ -104,11 +101,7 @@ def main():
             estimated_params_count_2 = 1
             class_count_2 = len(table2["frequencies_after"])
 
-            df2 = get_degrees_of_freedom(
-                class_count_2,
-                estimated_params_count_2
-            )
-
+            df2 = get_degrees_of_freedom(class_count_2, estimated_params_count_2)
             chi_crit_2 = get_chi_square_critical(alpha, df2)
             conclusion2 = check_hypothesis(chi_emp_2, chi_crit_2)
 
@@ -142,6 +135,24 @@ def main():
                 chi_square_critical=chi_crit_2,
                 conclusion_text=conclusion2
             )
+
+        plot_histogram(
+            bounds1_for_distribution,
+            frequencies1,
+            "output/histogram1.png",
+            "Гістограма 1",
+            1
+        )
+
+        plot_histogram(
+            bounds2,
+            frequencies2,
+            "output/histogram2.png",
+            "Гістограма 2",
+            2
+        )
+
+        show_all_histograms()
 
     except Exception as error:
         print("Помилка:", error)
