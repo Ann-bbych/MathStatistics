@@ -76,7 +76,7 @@ def get_variance(bounds, frequencies, mean):
     for i in range(len(midpoints)):
         total += ((midpoints[i] - mean) ** 2) * frequencies[i]
 
-    variance = total / n
+    variance = total / (n-1)
     return variance
 
 
